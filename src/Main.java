@@ -1,78 +1,104 @@
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Main {
     static class Edge{
-        int source;
-        int destination;
+        int src;
+        int dest;
+        int wt;
 
-        public Edge(int s,int d){
-            this.source=s;
-            this.destination=d;
+        public Edge(int s,int d,int wt){
+            this.src=s;
+            this.dest=d;
+            this.wt=wt;
+
         }
     }
-
-    static void createGraph(ArrayList<Edge>graph[]){
+    public static void createGraph(int flights[][],ArrayList<Edge>[]graph){
         for (int i=0;i< graph.length;i++){
             graph[i]=new ArrayList<>();
+
         }
 
-        graph[0].add(new Edge(0,1));
-        graph[0].add(new Edge(0,2));
-        graph[0].add(new Edge(0,3));
+        for (int i=0;i< flights.length;i++){
+            int src=flights[i][0];
+            int dest=flights[i][1];
+            int wt=flights[i][2];
 
-        graph[1].add(new Edge(1,0));
-        graph[1].add(new Edge(1,2));
 
-        graph[2].add(new Edge(2,0));
-        graph[2].add(new Edge(2,1));
-
-        graph[3].add(new Edge(3,0));
-        graph[3].add(new Edge(3,4));
-
-        graph[4].add(new Edge(4,3));
+            Edge e=new Edge(src,dest,wt);
+            graph[src].add(e);
+        }
     }
 
-    public static boolean detectCycle(ArrayList<Edge>[]graph){
-        boolean visited[]=new boolean[graph.length];
-        for (int i=0;i< graph.length;i++){
-            if(!visited[i]){
-                if(detectCycleUtil(graph,visited,i,-1) ){
-                    return true;
-                    //cycle exists in one of the parts
-                }
+    static class Info{
+        int node;
+        int cost;
+        int stops;
+
+        public Info(int n,int c,int s){
+            this.node=n;
+            this.cost=c;
+            this.stops=s;
+        }
+    }
+
+    public static int cheapestFlight(int n,int flights[][],int src,int dest,int k){
+        ArrayList<Edge>[]graph=new ArrayList[n];
+        createGraph(flights,graph);
+
+
+        int distance[]=new int[n];
+        for (int i=0;i<n;i++){
+            if (i!=src){
+                distance[i]=Integer.MAX_VALUE;
             }
         }
-        return false;
-    }
+        Queue<Info>q=new LinkedList<>();
+        q.add(new Info(src,0,0));
 
-    public static boolean detectCycleUtil(ArrayList<Edge>[]graph,boolean visited[],int currentNode,int parentNode){
-        visited[currentNode]=true;
-        for (int i=0;i<graph[currentNode].size();i++){
-            Edge e=graph[currentNode].get(i);
-            //case->3
-            if (!visited[e.destination] ){
-                if (detectCycleUtil(graph,visited,e.destination,currentNode)){
-                    return true;
+        while (!q.isEmpty()){
+           Info current=q.remove();
+           if (current.stops>k){
+               break;
+           }
+           for (int i=0;i<graph[current.node].size();i++){
+               Edge e=graph[current.node].get(i);
+               int u=e.src;
+               int v=e.dest;
+               int wt=e.wt;
 
-                }
+               if (current.cost+wt<distance[v] && current.stops<=k){
+                   distance[v]=current.cost+wt;
+                   q.add(new Info(n,distance[v],current.stops+1 ));
+               }
 
 
-            } else if (visited[e.destination] && e.destination!=parentNode) {//case->1
-                return true;
-                
-            }
-            //case 2->do nothing->continue
+           }
         }
-        return false;
+
+        //distance of destination
+        if (distance[dest]==Integer.MAX_VALUE){
+            return -1;
+        }else {
+            return distance[dest] ;
+        }
 
     }
+
+
     public static void main(String[] args) {
+        int n=4;
+        int flights[][]={{0,1,100},{1,2,100},{2,0,100},{1,3,600},{2,3,200}};
+        int source=0,destination=3,k=1;
+        cheapestFlight(n,flights,source,destination,k);
 
-        int vertex=5;
-        ArrayList<Edge>graph[]=new ArrayList[vertex];
-        createGraph(graph);
 
-        System.out.println(detectCycle(graph));
+
+
+
+
 
     }
 }
